@@ -1,0 +1,459 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>EmpFlow — Employee Management</title>
+<meta name="description" content="Modern employee management dashboard with full CRUD operations, department analytics and real-time search."/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #0f1e51;
+    --surface: #111627;
+    --card: #161d35;
+    --border: rgba(99,120,255,0.15);
+    --accent: #6378ff;
+    --accent2: #a78bfa;
+    --accent3: #38bdf8;
+    --danger: #f87171;
+    --success: #34d399;
+    --warning: #fbbf24;
+    --text: #e2e8f0;
+    --muted: #64748b;
+    --input-bg: #0f1526;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+  /* HEADER */
+  header{background:linear-gradient(135deg,#0f1526 0%,#161d35 100%);border-bottom:1px solid var(--border);padding:0 2rem;position:sticky;top:0;z-index:100;backdrop-filter:blur(20px)}
+  .header-inner{max-width:1300px;margin:auto;display:flex;align-items:center;justify-content:space-between;height:70px}
+  .logo{display:flex;align-items:center;gap:12px;font-weight:800;font-size:1.4rem;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+  .logo-icon{width:38px;height:38px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+  .header-badge{background:rgba(99,120,255,0.15);border:1px solid var(--border);color:var(--accent2);padding:4px 12px;border-radius:20px;font-size:0.75rem;font-weight:600}
+
+  /* MAIN */
+  main{max-width:1300px;margin:auto;padding:2rem}
+
+  /* STATS */
+  .stats-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:2rem}
+  .stat-card{background:var(--card);border:1px solid var(--border);border-radius:16px;padding:1.4rem;position:relative;overflow:hidden;transition:transform .2s,box-shadow .2s}
+  .stat-card:hover{transform:translateY(-3px);box-shadow:0 8px 30px rgba(99,120,255,0.15)}
+  .stat-card::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;border-radius:16px 16px 0 0}
+  .stat-card.blue::before{background:linear-gradient(90deg,var(--accent),var(--accent3))}
+  .stat-card.purple::before{background:linear-gradient(90deg,var(--accent2),#ec4899)}
+  .stat-card.green::before{background:linear-gradient(90deg,var(--success),#06b6d4)}
+  .stat-card.yellow::before{background:linear-gradient(90deg,var(--warning),#f97316)}
+  .stat-label{font-size:0.78rem;color:var(--muted);font-weight:500;text-transform:uppercase;letter-spacing:.05em;margin-bottom:.5rem}
+  .stat-value{font-size:2rem;font-weight:800;line-height:1}
+  .stat-sub{font-size:0.75rem;color:var(--muted);margin-top:.3rem}
+
+  /* DEPT PILLS */
+  .dept-pills{display:flex;flex-wrap:wrap;gap:.5rem;margin-bottom:2rem}
+  .dept-pill{background:rgba(99,120,255,0.1);border:1px solid var(--border);border-radius:20px;padding:5px 14px;font-size:0.78rem;font-weight:500;cursor:default;transition:.2s;white-space:nowrap}
+  .dept-pill span{color:var(--accent2);font-weight:700;margin-left:5px}
+
+  /* TOOLBAR */
+  .toolbar{display:flex;gap:1rem;align-items:center;margin-bottom:1.5rem;flex-wrap:wrap}
+  .search-wrap{flex:1;min-width:220px;position:relative}
+  .search-wrap svg{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:var(--muted)}
+  #searchInput{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:12px;padding:11px 14px 11px 42px;color:var(--text);font-family:inherit;font-size:.9rem;outline:none;transition:.2s}
+  #searchInput:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,120,255,0.15)}
+  #searchInput::placeholder{color:var(--muted)}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 20px;border-radius:12px;font-family:inherit;font-size:.88rem;font-weight:600;cursor:pointer;border:none;transition:.2s;white-space:nowrap}
+  .btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+  .btn-primary:hover{opacity:.88;transform:translateY(-1px)}
+  .btn-ghost{background:rgba(99,120,255,0.1);border:1px solid var(--border);color:var(--text)}
+  .btn-ghost:hover{background:rgba(99,120,255,0.2)}
+  .btn-danger{background:rgba(248,113,113,0.1);border:1px solid rgba(248,113,113,0.3);color:var(--danger)}
+  .btn-danger:hover{background:rgba(248,113,113,0.2)}
+  .btn-sm{padding:7px 13px;font-size:.78rem;border-radius:8px}
+
+  /* TABLE */
+  .table-wrap{background:var(--card);border:1px solid var(--border);border-radius:16px;overflow:hidden}
+  .table-header{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.5rem;border-bottom:1px solid var(--border)}
+  .table-title{font-weight:700;font-size:1rem}
+  .count-badge{background:rgba(99,120,255,0.15);color:var(--accent);padding:3px 10px;border-radius:20px;font-size:.78rem;font-weight:700}
+  table{width:100%;border-collapse:collapse}
+  thead th{padding:12px 16px;text-align:left;font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;background:rgba(0,0,0,.2);border-bottom:1px solid var(--border)}
+  tbody tr{border-bottom:1px solid rgba(99,120,255,0.07);transition:background .15s}
+  tbody tr:last-child{border-bottom:none}
+  tbody tr:hover{background:rgba(99,120,255,0.05)}
+  td{padding:14px 16px;font-size:.88rem;vertical-align:middle}
+  .emp-id{color:var(--muted);font-size:.78rem;font-weight:600;font-family:monospace}
+  .emp-name{font-weight:600}
+  .dept-tag{display:inline-block;padding:3px 10px;border-radius:6px;font-size:.75rem;font-weight:600}
+  .salary-cell{font-weight:700;color:var(--success)}
+  .actions-cell{display:flex;gap:.4rem}
+  .empty-state{text-align:center;padding:4rem 2rem;color:var(--muted)}
+  .empty-icon{font-size:3rem;margin-bottom:.8rem;opacity:.4}
+  .loading-row td{text-align:center;padding:2rem;color:var(--muted)}
+  .spinner{display:inline-block;width:24px;height:24px;border:3px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+  @keyframes spin{to{transform:rotate(360deg)}}
+
+  /* MODAL */
+  .overlay{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(6px);z-index:200;display:flex;align-items:center;justify-content:center;padding:1rem;opacity:0;pointer-events:none;transition:.25s}
+  .overlay.open{opacity:1;pointer-events:all}
+  .modal{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:2rem;width:100%;max-width:480px;transform:scale(.94) translateY(20px);transition:.25s;box-shadow:0 25px 60px rgba(0,0,0,.5)}
+  .overlay.open .modal{transform:scale(1) translateY(0)}
+  .modal-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem}
+  .modal-title{font-size:1.2rem;font-weight:700}
+  .close-btn{background:rgba(255,255,255,.06);border:none;color:var(--muted);width:34px;height:34px;border-radius:8px;cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:.2s}
+  .close-btn:hover{background:rgba(255,255,255,.12);color:var(--text)}
+  .form-group{margin-bottom:1.1rem}
+  label{display:block;font-size:.8rem;font-weight:600;color:var(--muted);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.04em}
+  input,select{width:100%;background:var(--input-bg);border:1px solid var(--border);border-radius:10px;padding:11px 14px;color:var(--text);font-family:inherit;font-size:.9rem;outline:none;transition:.2s}
+  input:focus,select:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,120,255,.15)}
+  select option{background:var(--card)}
+  .form-row{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+  .modal-footer{display:flex;gap:.8rem;margin-top:1.5rem;justify-content:flex-end}
+
+  /* TOAST */
+  #toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:999;display:flex;flex-direction:column;gap:.5rem;pointer-events:none}
+  .toast-item{background:var(--card);border:1px solid var(--border);border-radius:12px;padding:12px 18px;font-size:.85rem;font-weight:500;display:flex;align-items:center;gap:10px;animation:slideIn .3s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);min-width:240px}
+  .toast-item.success{border-left:3px solid var(--success)}
+  .toast-item.error{border-left:3px solid var(--danger)}
+  .toast-item.fadeout{animation:fadeOut .4s ease forwards}
+  @keyframes slideIn{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}
+  @keyframes fadeOut{to{transform:translateX(120%);opacity:0}}
+
+  /* DEPT COLORS */
+  .dept-Engineering{background:rgba(99,120,255,0.15);color:#818cf8}
+  .dept-HR{background:rgba(236,72,153,0.15);color:#f472b6}
+  .dept-Finance{background:rgba(52,211,153,0.15);color:#34d399}
+  .dept-Marketing{background:rgba(251,191,36,0.15);color:#fbbf24}
+  .dept-Operations{background:rgba(56,189,248,0.15);color:#38bdf8}
+  .dept-Sales{background:rgba(248,113,113,0.15);color:#f87171}
+  .dept-default{background:rgba(100,116,139,0.15);color:#94a3b8}
+
+  /* DELETE CONFIRM */
+  .confirm-overlay{position:fixed;inset:0;background:rgba(0,0,0,.75);backdrop-filter:blur(6px);z-index:300;display:flex;align-items:center;justify-content:center;opacity:0;pointer-events:none;transition:.2s}
+  .confirm-overlay.open{opacity:1;pointer-events:all}
+  .confirm-box{background:var(--card);border:1px solid rgba(248,113,113,0.3);border-radius:16px;padding:2rem;max-width:380px;width:100%;text-align:center;transform:scale(.9);transition:.2s}
+  .confirm-overlay.open .confirm-box{transform:scale(1)}
+  .confirm-icon{font-size:2.5rem;margin-bottom:.8rem}
+  .confirm-title{font-size:1.1rem;font-weight:700;margin-bottom:.5rem}
+  .confirm-sub{font-size:.85rem;color:var(--muted);margin-bottom:1.5rem}
+  .confirm-btns{display:flex;gap:.8rem;justify-content:center}
+
+  @media(max-width:700px){
+    main{padding:1rem}
+    .form-row{grid-template-columns:1fr}
+    table{font-size:.8rem}
+    td,thead th{padding:10px 10px}
+    .actions-cell{flex-direction:column}
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-inner">
+    <div class="logo">
+      <div class="logo-icon" style="-webkit-text-fill-color:#fff">👥</div>
+      EmpFlow
+    </div>
+    <div class="header-badge">MongoDB · Mongoose</div>
+  </div>
+</header>
+
+<main>
+  <!-- STATS -->
+  <div class="stats-grid" id="statsGrid">
+    <div class="stat-card blue">
+      <div class="stat-label">Total Employees</div>
+      <div class="stat-value" id="statTotal">—</div>
+      <div class="stat-sub">Across all departments</div>
+    </div>
+    <div class="stat-card purple">
+      <div class="stat-label">Departments</div>
+      <div class="stat-value" id="statDepts">—</div>
+      <div class="stat-sub">Active departments</div>
+    </div>
+    <div class="stat-card green">
+      <div class="stat-label">Avg. Salary</div>
+      <div class="stat-value" id="statAvg">—</div>
+      <div class="stat-sub">Monthly average</div>
+    </div>
+    <div class="stat-card yellow">
+      <div class="stat-label">Top Department</div>
+      <div class="stat-value" id="statTop" style="font-size:1.1rem;margin-top:.2rem">—</div>
+      <div class="stat-sub">Largest team</div>
+    </div>
+  </div>
+
+  <!-- DEPT PILLS -->
+  <div class="dept-pills" id="deptPills"></div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="search-wrap">
+      <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+      <input id="searchInput" type="text" placeholder="Search by name or department…" oninput="filterTable()"/>
+    </div>
+    <button class="btn btn-ghost" onclick="loadAll()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M1 4v6h6M23 20v-6h-6"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
+      Refresh
+    </button>
+    <button class="btn btn-primary" id="addBtn" onclick="openModal()">
+      <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+      Add Employee
+    </button>
+  </div>
+
+  <!-- TABLE -->
+  <div class="table-wrap">
+    <div class="table-header">
+      <span class="table-title">Employee Directory</span>
+      <span class="count-badge" id="countBadge">0 records</span>
+    </div>
+    <div style="overflow-x:auto">
+      <table id="empTable">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Name</th>
+            <th>Department</th>
+            <th>Salary</th>
+            <th>Added</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <tr class="loading-row"><td colspan="6"><div class="spinner"></div></td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- ADD/EDIT MODAL -->
+<div class="overlay" id="modalOverlay" onclick="closeModalOutside(event)">
+  <div class="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">Add Employee</div>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <form id="empForm" onsubmit="submitForm(event)">
+      <div class="form-group">
+        <label for="nameInput">Full Name</label>
+        <input id="nameInput" type="text" placeholder="e.g. John Smith" required/>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label for="deptInput">Department</label>
+          <select id="deptInput" required>
+            <option value="">Select department</option>
+            <option>Engineering</option>
+            <option>HR</option>
+            <option>Finance</option>
+            <option>Marketing</option>
+            <option>Operations</option>
+            <option>Sales</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label for="salaryInput">Salary ($)</label>
+          <input id="salaryInput" type="number" placeholder="e.g. 75000" min="0" required/>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary" id="submitBtn">
+          <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+          Save Employee
+        </button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-box">
+    <div class="confirm-icon">🗑️</div>
+    <div class="confirm-title">Delete Employee?</div>
+    <div class="confirm-sub" id="confirmSub">This action cannot be undone.</div>
+    <div class="confirm-btns">
+      <button class="btn btn-ghost" onclick="closeConfirm()">Cancel</button>
+      <button class="btn btn-danger" id="confirmDeleteBtn">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<script>
+const API = '/api/employees';
+let allEmployees = [];
+let editingId = null;
+let deletingId = null;
+
+/* ===== INIT ===== */
+loadAll();
+
+async function loadAll() {
+  setLoading(true);
+  try {
+    const [emps, depts] = await Promise.all([
+      fetch(API).then(r => r.json()),
+      fetch(`${API}/department-count`).then(r => r.json())
+    ]);
+    allEmployees = Array.isArray(emps) ? emps : [];
+    renderTable(allEmployees);
+    renderStats(allEmployees, depts);
+    renderDeptPills(depts);
+  } catch(e) {
+    toast('Failed to connect to server', 'error');
+    setLoading(false);
+  }
+}
+
+/* ===== RENDER TABLE ===== */
+function renderTable(list) {
+  const tbody = document.getElementById('tableBody');
+  document.getElementById('countBadge').textContent = `${list.length} record${list.length !== 1 ? 's' : ''}`;
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="6"><div class="empty-state"><div class="empty-icon">📋</div><div>No employees found</div></div></td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(e => {
+    const deptClass = `dept-${e.department?.replace(/\s/g,'')}` in document.styleSheets[0] ? `dept-${e.department}` : 'dept-default';
+    const date = e.createdAt ? new Date(e.createdAt).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '—';
+    const sal = typeof e.salary === 'number' ? '$' + e.salary.toLocaleString() : '—';
+    return `<tr>
+      <td><span class="emp-id">#${e.employeeId ?? '—'}</span></td>
+      <td><span class="emp-name">${esc(e.name)}</span></td>
+      <td><span class="dept-tag dept-${esc(e.department?.replace(/\s/g,''))}">${esc(e.department)}</span></td>
+      <td><span class="salary-cell">${sal}</span></td>
+      <td style="color:var(--muted);font-size:.8rem">${date}</td>
+      <td><div class="actions-cell">
+        <button class="btn btn-ghost btn-sm" onclick="openEdit(${e.employeeId})">✏️ Edit</button>
+        <button class="btn btn-danger btn-sm" onclick="askDelete(${e.employeeId},'${esc(e.name)}')">🗑️</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+}
+
+/* ===== STATS ===== */
+function renderStats(emps, depts) {
+  document.getElementById('statTotal').textContent = emps.length;
+  document.getElementById('statDepts').textContent = depts.length;
+  const avg = emps.length ? Math.round(emps.reduce((s,e)=>s+(e.salary||0),0)/emps.length) : 0;
+  document.getElementById('statAvg').textContent = avg ? '$'+avg.toLocaleString() : '—';
+  const top = depts.sort((a,b)=>b.totalEmployees-a.totalEmployees)[0];
+  document.getElementById('statTop').textContent = top ? top._id : '—';
+}
+
+/* ===== DEPT PILLS ===== */
+function renderDeptPills(depts) {
+  const el = document.getElementById('deptPills');
+  if (!depts.length) { el.innerHTML = ''; return; }
+  el.innerHTML = depts.sort((a,b)=>b.totalEmployees-a.totalEmployees).map(d =>
+    `<div class="dept-pill dept-tag dept-${esc(d._id?.replace(/\s/g,''))}">${esc(d._id)}<span>${d.totalEmployees}</span></div>`
+  ).join('');
+}
+
+/* ===== FILTER ===== */
+function filterTable() {
+  const q = document.getElementById('searchInput').value.toLowerCase();
+  renderTable(allEmployees.filter(e =>
+    e.name?.toLowerCase().includes(q) || e.department?.toLowerCase().includes(q)
+  ));
+}
+
+/* ===== MODAL ===== */
+function openModal(emp) {
+  editingId = emp ? emp.employeeId : null;
+  document.getElementById('modalTitle').textContent = emp ? 'Edit Employee' : 'Add Employee';
+  document.getElementById('nameInput').value = emp?.name || '';
+  document.getElementById('deptInput').value = emp?.department || '';
+  document.getElementById('salaryInput').value = emp?.salary || '';
+  document.getElementById('submitBtn').innerHTML = emp
+    ? '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg> Update'
+    : '<svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg> Save Employee';
+  document.getElementById('modalOverlay').classList.add('open');
+  setTimeout(()=>document.getElementById('nameInput').focus(),200);
+}
+
+function openEdit(id) {
+  const emp = allEmployees.find(e => e.employeeId === id);
+  if (emp) openModal(emp);
+}
+
+function closeModal() { document.getElementById('modalOverlay').classList.remove('open'); }
+function closeModalOutside(e) { if(e.target === document.getElementById('modalOverlay')) closeModal(); }
+
+async function submitForm(e) {
+  e.preventDefault();
+  const btn = document.getElementById('submitBtn');
+  btn.disabled = true;
+  const body = {
+    name: document.getElementById('nameInput').value.trim(),
+    department: document.getElementById('deptInput').value,
+    salary: Number(document.getElementById('salaryInput').value)
+  };
+  try {
+    if (editingId) {
+      await fetch(`${API}/${editingId}`, {method:'PUT',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      toast('Employee updated successfully', 'success');
+    } else {
+      await fetch(API, {method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});
+      toast('Employee added successfully', 'success');
+    }
+    closeModal();
+    loadAll();
+  } catch(err) {
+    toast('Something went wrong', 'error');
+  }
+  btn.disabled = false;
+}
+
+/* ===== DELETE ===== */
+function askDelete(id, name) {
+  deletingId = id;
+  document.getElementById('confirmSub').textContent = `Remove "${name}" from the directory?`;
+  document.getElementById('confirmOverlay').classList.add('open');
+}
+function closeConfirm() { document.getElementById('confirmOverlay').classList.remove('open'); }
+
+document.getElementById('confirmDeleteBtn').onclick = async () => {
+  if (!deletingId) return;
+  try {
+    await fetch(`${API}/${deletingId}`, {method:'DELETE'});
+    toast('Employee deleted', 'success');
+    closeConfirm();
+    loadAll();
+  } catch(e) {
+    toast('Delete failed', 'error');
+  }
+};
+
+/* ===== LOADING ===== */
+function setLoading(on) {
+  if (on) document.getElementById('tableBody').innerHTML = '<tr class="loading-row"><td colspan="6"><div class="spinner"></div></td></tr>';
+}
+
+/* ===== TOAST ===== */
+function toast(msg, type='success') {
+  const c = document.getElementById('toast');
+  const icon = type === 'success' ? '✅' : '❌';
+  const el = document.createElement('div');
+  el.className = `toast-item ${type}`;
+  el.innerHTML = `<span>${icon}</span><span>${msg}</span>`;
+  c.appendChild(el);
+  setTimeout(() => { el.classList.add('fadeout'); setTimeout(()=>el.remove(), 400); }, 3000);
+}
+
+/* ===== ESC ===== */
+function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+/* ESC key closes modals */
+document.addEventListener('keydown', e => {
+  if(e.key==='Escape'){ closeModal(); closeConfirm(); }
+});
+</script>
+</body>
+</html>
